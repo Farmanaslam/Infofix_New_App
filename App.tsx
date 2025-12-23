@@ -30,7 +30,14 @@ import {
 } from "./types";
 import { AlertTriangle, ExternalLink, WifiOff } from "lucide-react";
 import { db, isFirebaseConfigured } from "./firebaseConfig";
-import { collection, doc, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from "firebase/firestore";
 
 // --- TYPES ---
 type SyncStatus = "connected" | "local" | "error";
@@ -191,8 +198,6 @@ function useSmartSync<T>(
     return () => unsub();
   }, [docName, isSyncEnabled]); // Keep dependency array clean
 
-
-  
   const updateData = (newValue: T) => {
     // 1. Update State (Optimistic)
     setData(newValue);
@@ -240,9 +245,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   stores: [
     { id: "s1", name: "DGP Showroom" },
     { id: "s2", name: "DGP Shop" },
-     { id: "s3", name: "Asansol" },
-      { id: "s4", name: "Ukhra" },
-       { id: "s5", name: "Service Center" },
+    { id: "s3", name: "Asansol" },
+    { id: "s4", name: "Ukhra" },
+    { id: "s5", name: "Service Center" },
   ],
   deviceTypes: [
     { id: "d1", name: "Smartphone" },
@@ -393,34 +398,30 @@ function App() {
     null
   );
 
-useEffect(() => {
-  if (!isFirebaseConfigured || !db) return;
+  useEffect(() => {
+    if (!isFirebaseConfigured || !db) return;
 
-  const q = query(
-    collection(db, "tickets"),
-    orderBy("createdAt", "desc")
-  );
+    const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const list: Ticket[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Ticket, "id">),
-      }));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: Ticket[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Ticket, "id">),
+        }));
 
-      setTickets(list);
-      setSyncStatus("connected");
-    },
-    (error) => {
-      console.error("Tickets listener error:", error);
-      setSyncStatus("local");
-    }
-  );
+        setTickets(list);
+        setSyncStatus("connected");
+      },
+      (error) => {
+        console.error("Tickets listener error:", error);
+        setSyncStatus("local");
+      }
+    );
 
-  return () => unsubscribe();
-}, []);
-
+    return () => unsubscribe();
+  }, []);
 
   // --- HANDLERS ---
   const handleLogin = (user: User) => {
