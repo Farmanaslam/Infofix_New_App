@@ -39,7 +39,7 @@ export default function CustomerProfile({
 
   // Stats
   const myTickets = tickets.filter(
-    (t) => t.email.toLowerCase() === currentUser.email.toLowerCase()
+    (t) => t?.email?.toLowerCase() === currentUser?.email?.toLowerCase()
   );
   const totalTickets = myTickets.length;
   const activeTickets = myTickets.filter(
