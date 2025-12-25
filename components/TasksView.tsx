@@ -172,6 +172,7 @@ export default function TasksView({
       Math.round((reportsThisMonth / monthlyTarget) * 100),
       100
     );
+   
 
     return {
       active: total - completed,
@@ -409,6 +410,7 @@ export default function TasksView({
           )}
         </div>
       </div>
+      
 
       {/* 2. KPI GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
