@@ -54,9 +54,52 @@ export default function Login({
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Separate remember states for staff and customer
+  const [staffRemember, setStaffRemember] = useState(false);
+  const [custRemember, setCustRemember] = useState(false);
+  useEffect(() => {
+    setError(null);
+    if (activeTab === "staff") {
+      const savedStaff = localStorage.getItem("nexus_staff_login");
+      if (savedStaff) {
+        try {
+          const { email } = JSON.parse(savedStaff);
+          setStaffEmail(email || "");
+          setStaffRemember(true);
+        } catch (e) {
+          console.error("Failed to parse saved staff credentials");
+          setStaffEmail("");
+          setStaffRemember(false);
+        }
+      } else {
+        setStaffEmail("");
+        setStaffRemember(false);
+      }
+    } else {
+      const savedCust = localStorage.getItem("nexus_cust_login");
+      if (savedCust) {
+        try {
+          const { email, phone } = JSON.parse(savedCust);
+          setCustEmail(email || "");
+          setCustPhone(phone || "");
+          setCustRemember(true);
+        } catch (e) {
+          console.error("Failed to parse saved customer credentials");
+          setCustEmail("");
+          setCustPhone("");
+          setCustRemember(false);
+        }
+      } else {
+        setCustEmail("");
+        setCustPhone("");
+        setCustRemember(false);
+      }
+    }
+  }, [activeTab]);
 
   // --- Load Saved Credentials on Mount or Tab Change ---
-  useEffect(() => {
+  {
+    /*useEffect(() => {
     setError(null);
     if (activeTab === "staff") {
       const savedStaff = localStorage.getItem("nexus_staff_login");
@@ -92,7 +135,8 @@ export default function Login({
       }
     }
   }, [activeTab]);
-
+*/
+  }
   const simulateLoading = (callback: () => void) => {
     setIsLoading(true);
     setTimeout(() => {
@@ -101,59 +145,71 @@ export default function Login({
     }, 800); // Fake delay for UX feel
   };
 
-  const handleStaffLogin =async (e: React.FormEvent) => {
+  const handleStaffLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-  setError(null);
-  setIsLoading(true);
+    setError(null);
+    setIsLoading(true);
 
-  try {
-    // 1️⃣ Firebase Auth login
-    const userCred = await signInWithEmailAndPassword(
-      auth,
-      staffEmail,
-      staffPass
-    );
-
-    // 2️⃣ Fetch staff profile
-    const snap = await getDoc(doc(db, "users", userCred.user.uid));
-
-    if (!snap.exists()) {
-      throw new Error("Staff profile not found");
-    }
-
-    const data = snap.data();
-
-    // 3️⃣ Role validation
-    if (data.role !== "TECHNICIAN" && data.role !== "MANAGER" && data.role !== "ADMIN") {
-      throw new Error("Not authorized as staff");
-    }
-
-    // 4️⃣ Remember me
-    if (rememberMe) {
-      localStorage.setItem(
-        "nexus_staff_login",
-        JSON.stringify({ email: staffEmail })
+    try {
+      // 1️⃣ Firebase Auth login
+      const userCred = await signInWithEmailAndPassword(
+        auth,
+        staffEmail,
+        staffPass
       );
-    } else {
-      localStorage.removeItem("nexus_staff_login");
+
+      // 2️⃣ Fetch staff profile
+      const snap = await getDoc(doc(db, "users", userCred.user.uid));
+
+      if (!snap.exists()) {
+        throw new Error("Staff profile not found");
+      }
+
+      const data = snap.data();
+
+      // 3️⃣ Role validation
+      if (
+        data.role !== "TECHNICIAN" &&
+        data.role !== "MANAGER" &&
+        data.role !== "ADMIN"
+      ) {
+        throw new Error("Not authorized as staff");
+      }
+
+      // 4️⃣ Remember Me
+      if (staffRemember) {
+        localStorage.setItem(
+          "nexus_staff_login",
+          JSON.stringify({ email: staffEmail })
+        );
+      } else {
+        localStorage.removeItem("nexus_staff_login");
+      }
+
+      // 5️⃣ Login success
+      onLogin({
+        id: userCred.user.uid,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      });
+    } catch (err: any) {
+      setError("Invalid email or password");
+    } finally {
+      setIsLoading(false);
     }
-
-    // 5️⃣ Login success
-    onLogin({
-      id: userCred.user.uid,
-      name: data.name,
-      email: data.email,
-      role: data.role,
-    });
-
-  } catch (err: any) {
-    setError("Invalid email or password");
-  } finally {
-    setIsLoading(false);
-  }
   };
 
   const handleCustomerLogin = async (e: React.FormEvent) => {
+    if (custRemember) {
+      localStorage.setItem(
+        "nexus_cust_login",
+        JSON.stringify({ email: custEmail, phone: custPhone })
+      );
+    } else {
+      localStorage.removeItem("nexus_cust_login");
+    }
+
     e.preventDefault();
     setError(null);
 
@@ -286,7 +342,7 @@ export default function Login({
           id: userCred.user.uid,
           name: data.name,
           email: data.email,
-          role: "CUSTOMER",   
+          role: "CUSTOMER",
         });
       } catch (err: any) {
         setError("Invalid email or password");
@@ -340,7 +396,7 @@ export default function Login({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-full min-h-[650px] relative z-10 animate-in fade-in zoom-in-95 duration-500 ring-1 ring-black/5">
+      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl flex flex-col md:flex-row h-auto max-h-[90vh] relative z-10 animate-in fade-in zoom-in-95 duration-500 ring-1 ring-black/5 overflow-hidden md:overflow-visible">
         {/* LEFT SIDE: Visuals (Hidden on Mobile) */}
         <div className="hidden md:flex w-full md:w-1/2 bg-slate-900 relative overflow-hidden flex-col justify-between p-10 text-white">
           {/* Animated Gradient Background */}
@@ -410,7 +466,7 @@ export default function Login({
         </div>
 
         {/* RIGHT SIDE: Form */}
-        <div className="w-full md:w-1/2 bg-white p-8 lg:p-12 flex flex-col justify-center relative">
+        <div className="w-full md:w-1/2 bg-white p-8 lg:p-12 flex flex-col justify-center relative overflow-y-auto">
           <div className="max-w-md mx-auto w-full relative z-10">
             {/* Mobile Only Header */}
             <div className="md:hidden text-center mb-6 animate-in slide-in-from-top-4">
@@ -587,16 +643,16 @@ export default function Login({
                   {!isSignUp && (
                     <div
                       className="flex items-center gap-2 cursor-pointer group select-none pt-2"
-                      onClick={() => setRememberMe(!rememberMe)}
+                      onClick={() => setCustRemember(!custRemember)}
                     >
                       <div
                         className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${
-                          rememberMe
+                          custRemember
                             ? "bg-indigo-600 border-indigo-600"
                             : "bg-white border-slate-300 group-hover:border-indigo-400"
                         }`}
                       >
-                        {rememberMe && (
+                        {custRemember && (
                           <CheckSquare size={12} className="text-white" />
                         )}
                       </div>
@@ -718,15 +774,18 @@ export default function Login({
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
-                    <label className="flex items-center gap-2 cursor-pointer group select-none">
+                    <label
+                      className="flex items-center gap-2 cursor-pointer group select-none"
+                      onClick={() => setStaffRemember(!staffRemember)}
+                    >
                       <div
                         className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${
-                          rememberMe
+                          staffRemember
                             ? "bg-indigo-600 border-indigo-600"
                             : "bg-white border-slate-300 group-hover:border-indigo-400"
                         }`}
                       >
-                        {rememberMe && (
+                        {staffRemember && (
                           <CheckSquare size={12} className="text-white" />
                         )}
                       </div>
