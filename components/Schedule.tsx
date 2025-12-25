@@ -124,11 +124,26 @@ export default function Schedule({
   ];
 
   const visibleTasks = useMemo(() => {
-    // ADMIN sees everything
+     // ADMIN sees:
+  // 1. Tasks created by them
+  // 2. Tasks assigned by them (to manager or technician)
     if (currentUser.role === "ADMIN") {
-      return tasks;
-    }
-
+    return tasks.filter(
+      (t) =>
+        t.createdById === currentUser.id ||
+        t.assignedToId === currentUser.id
+    );
+  }
+  // MANAGER sees:
+  // 1. Tasks created by them
+  // 2. Tasks assigned by them (to technicians)
+  if (currentUser.role === "MANAGER") {
+    return tasks.filter(
+      (t) =>
+        t.createdById === currentUser.id ||
+        t.assignedToId === currentUser.id
+    );
+  }
     // TECHNICIAN sees only assigned tasks
     return tasks.filter((t) => t.assignedToId === currentUser.id);
   }, [tasks, currentUser]);
