@@ -83,12 +83,12 @@ export interface SupabaseTicket {
   resolved_at: string | null;
 
   device: {
-    type: string;                    // ✅ always required
-    brand?: string | null;           // ✅ optional
-    brandService?: string | null;    // ✅ optional
-    model?: string | null;           // ✅ optional
-    serialNumber?: string | null;    // ✅ optional
-    description?: string | null;     // ✅ optional
+    type: string; // ✅ always required
+    brand?: string | null; // ✅ optional
+    brandService?: string | null; // ✅ optional
+    model?: string | null; // ✅ optional
+    serialNumber?: string | null; // ✅ optional
+    description?: string | null; // ✅ optional
   };
 
   charger_status: string;
@@ -100,10 +100,8 @@ export interface SupabaseTicket {
   bill_number: string | null;
   scheduled_date: string | null;
   internal_progress_reason?: string | null;
-    internal_progress_note?: string | null;
+  internal_progress_note?: string | null;
 }
-
-
 
 export interface Ticket {
   id: string;
